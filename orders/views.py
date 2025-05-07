@@ -5,6 +5,21 @@ from .forms import CustomerForm, LaundryItemForm
 from django.db.models import Q
 from django.core.paginator import Paginator
 
+
+
+def customer_create(request):
+    if request.method == 'POST':
+        form = CustomerForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('customer_list')  # Redirect to customer list after creation
+    else:
+        form = CustomerForm()
+
+    return render(request, 'orders/customer_create.html', {'form': form})
+
+
+
 # Edit customer details
 def customer_edit(request, pk):
     customer = get_object_or_404(Customer, pk=pk)
@@ -84,25 +99,17 @@ def customer_history(request, customer_id):
     })
 
 # List customers with search and pagination
+
 def customer_list(request):
-    search_query = request.GET.get('q', '')  # Get search query from URL parameters
-    customers = Customer.objects.all()
+    query = request.GET.get('q', '')
+    customers = Customer.objects.exclude(pk=1)  # 👈 exclude customer with pk=1
 
-    # Apply search filter if there's a search query
-    if search_query:
-        customers = customers.filter(
-            Q(name__icontains=search_query) | 
-            Q(address__icontains=search_query) | 
-            Q(phone__icontains=search_query)
-        )
+    if query:
+        customers = customers.filter(name__icontains=query)
 
-    # Pagination logic: 10 customers per page
-    paginator = Paginator(customers, 10)
-    page_number = request.GET.get('page')  # Get page number from URL parameters
-    page_obj = paginator.get_page(page_number)  # Get customers for the current page
+    paginator = Paginator(customers, 10)  # Adjust number per page as needed
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
-    # Render the customer list template
-    return render(request, 'orders/customer_list.html', {
-        'page_obj': page_obj,  # Pass paginated customers to the template
-        'search_query': search_query  # Pass the search query to maintain it in the form
-    })
+    return render(request, 'orders/customer_list.html', {'page_obj': page_obj})
+

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Laundry Item</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="container mt-5">
+
+    <h2>Edit Laundry Item</h2>
+
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label for="id_customer" class="form-label">Customer</label>
+            <select name="customer" id="id_customer" class="form-select">
+                {% for customer in customers %}
+                    <option value="{{ customer.id }}" {% if customer.id == laundry_item.customer.id %}selected{% endif %}>
+                        {{ customer.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_service" class="form-label">Service</label>
+            <select name="service" id="id_service" class="form-select">
+                <option value="Wash Only" {% if laundry_item.service == "Wash Only" %}selected{% endif %}>Wash Only</option>
+                <option value="Wash and Dry" {% if laundry_item.service == "Wash and Dry" %}selected{% endif %}>Wash and Dry</option>
+                <option value="Wash, Dry and Fold" {% if laundry_item.service == "Wash, Dry and Fold" %}selected{% endif %}>Wash, Dry and Fold</option>
+                <option value="Ironing" {% if laundry_item.service == "Ironing" %}selected{% endif %}>Ironing</option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_quantity" class="form-label">Quantity</label>
+            <input type="number" name="quantity" id="id_quantity" class="form-control" value="{{ laundry_item.quantity }}" min="1" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="{% url 'laundry_item_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+
+</body>
+</html>

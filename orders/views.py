@@ -2,8 +2,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Customer, LaundryItem
 from .forms import CustomerForm, LaundryItemForm
 
+from django.urls import reverse
+
 from django.db.models import Q
 from django.core.paginator import Paginator
+
+
+def main_menu(request):
+    return render(request, 'orders/main_menu.html')
 
 
 
@@ -18,8 +24,6 @@ def customer_create(request):
 
     return render(request, 'orders/customer_create.html', {'form': form})
 
-
-
 # Edit customer details
 def customer_edit(request, pk):
     customer = get_object_or_404(Customer, pk=pk)
@@ -32,8 +36,7 @@ def customer_edit(request, pk):
             return redirect('customer_detail', pk=customer.pk)  # Redirect to the customer detail page
     else:
         form = CustomerForm(instance=customer)
-
-   
+ 
     return render(request, 'orders/customer_edit.html', {'form': form, 'customer': customer})
 
 # Delete customer
@@ -112,4 +115,67 @@ def customer_list(request):
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'orders/customer_list.html', {'page_obj': page_obj})
+
+
+
+
+def laundry_item_list(request):
+    laundry_items = LaundryItem.objects.select_related('customer').order_by('-date_added')
+    return render(request, 'orders/laundry_item_list.html', {'laundry_items': laundry_items})
+
+
+def laundry_item_create(request):
+    if request.method == 'POST':
+        form = LaundryItemForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('laundry_item_list')
+    else:
+        form = LaundryItemForm()
+    return render(request, 'orders/laundry_item_form.html', {'form': form})
+
+
+def laundry_item_edit(request, pk):
+    laundry_item = get_object_or_404(LaundryItem, pk=pk)
+    
+    if request.method == 'POST':
+        customer_id = request.POST.get('customer')
+        service = request.POST.get('service')
+        quantity = request.POST.get('quantity')
+
+        # Update the laundry item with the new data
+        laundry_item.customer = Customer.objects.get(id=customer_id)
+        laundry_item.service = service
+        laundry_item.quantity = quantity
+        laundry_item.save()
+
+        return redirect('laundry_item_list')  # Redirect back to the laundry item list
+    
+    customers = Customer.objects.all()  # Get all customers for the dropdown
+    return render(request, 'orders/laundry_item_edit.html', {'laundry_item': laundry_item, 'customers': customers})
+
+
+def laundry_item_delete(request, pk):
+    item = get_object_or_404(LaundryItem, pk=pk)
+    if request.method == 'POST':
+        item.delete()
+        return redirect('laundry_item_list')
+    #return render(request, 'laundry/laundry_item_confirm_delete.html', {'item': item})
+    
+    return render(request, 'orders/laundry_item_delete.html', {'item': item})
+
+
+
+
+def add_laundry_item(request):
+    if request.method == 'POST':
+        form = LaundryItemForm(request.POST)
+        if form.is_valid():
+            form.save()  # Save the new laundry item to the database
+            return redirect('laundry_item_list')  # Redirect to the laundry item list page
+    else:
+        form = LaundryItemForm()
+
+    return render(request, 'laundry/laundry_item_add.html', {'form': form})
+
 
